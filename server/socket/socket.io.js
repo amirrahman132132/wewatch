@@ -53,5 +53,5 @@ io.on("connection", (socket) => {
 })
 
 server.listen(PORT , e=>{
-    console.log(`server established at http://localhost:${PORT}`)
+    console.log(`server established at port number ${PORT}`)
 })

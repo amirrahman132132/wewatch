@@ -8,7 +8,7 @@ export default function Mainpage(props) {
 
     const inputEl = useRef()
     const [roomLink, setroomLink] = useState("")
-    const [videoLink, setvideoLink] = useState("http://index1.circleftp.net/FILE/Hindi%20Movies/2023/Bloody%20Daddy%20%282023%29%201080p%20WebRip%20Hindi%20x264/Bloody%20Daddy%20%282023%29%201080p%20WebRip%20Hindi%20x264.mkv")
+    const [videoLink, setvideoLink] = useState("")
     const videoEl = useRef()
     const videoIEL = useRef()
 
