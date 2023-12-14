@@ -1,7 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
+let count = 0
+
 export default function handler(req, res) {
-    setTimeout(()=>{
-        res.status(200).json({ name: 'John Doe' })
-    },5000)
+    count++
+    res.status(200).json({ name: 'John Doe', count })
 }
