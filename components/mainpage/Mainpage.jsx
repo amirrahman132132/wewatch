@@ -8,7 +8,7 @@ export default function Mainpage(props) {
 
     const inputEl = useRef()
     const [roomLink, setroomLink] = useState("")
-    const [videoLink, setvideoLink] = useState("http://index1.circleftp.net/FILE/Hindi%20Movies/2023/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264.mkv")
+    const [videoLink, setvideoLink] = useState("")
     const videoEl = useRef()
     const videoIEL = useRef()
 
@@ -55,7 +55,7 @@ export default function Mainpage(props) {
 
         // networking
         const signal = signal_system_client({
-            baseurl : `http://${location.host}/api/signaling`,
+            baseurl : `${location.href.split('/room')[0]}/api/signaling`,
             channel : room_id
         })
 
@@ -66,10 +66,6 @@ export default function Mainpage(props) {
         },false)
 
         signal.startPoll()
-
-        // recieving data
-        // ws.onData = function (data) {
-        // }
 
         // sending data
         vEl.addEventListener("playing", (e) => {
