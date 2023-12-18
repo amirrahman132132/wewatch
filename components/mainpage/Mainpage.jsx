@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { Button, Input, Section } from "../corepagedesign/CorePageComponents"
-import { copytoclipboard } from "../../common"
-import Socket_Client from "./socket_client"
+import signal_system_client from "../../scripts/signal_system/signal_system_client"
+import { copytoclipboard } from "../../scripts/common"
 
 export default function Mainpage(props) {
     const { room_id } = props
 
     const inputEl = useRef()
     const [roomLink, setroomLink] = useState("")
-    const [videoLink, setvideoLink] = useState("")
+    const [videoLink, setvideoLink] = useState("http://index1.circleftp.net/FILE/Hindi%20Movies/2023/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264.mkv")
     const videoEl = useRef()
     const videoIEL = useRef()
 
@@ -16,7 +16,6 @@ export default function Mainpage(props) {
     const socket = useRef()
     useEffect(() => {
         setroomLink(location.href)
-        socket.current = Socket_Client(room_id)
     }, [])
 
     // video player events
@@ -42,12 +41,8 @@ export default function Mainpage(props) {
         }
     }
 
-    function emitPlayerData() {
-
-    }
-
+    // 
     useEffect(() => {
-        const ws = socket.current
         const vEl = videoEl.current
 
         vEl.addEventListener(
@@ -58,31 +53,37 @@ export default function Mainpage(props) {
             true
         )
 
-        // recieving data
-        ws.onData = function (data) {
-            const delay = (Date.now() - data.time + playerInfo.current.playedAfter) / 1000
-            console.log(delay)
+        // networking
+        const signal = signal_system_client({
+            baseurl : `http://${location.host}/api/signaling`,
+            channel : room_id
+        })
+
+        signal.on.data.bind(d=>{
             playerInfo.current.changedByUser = false
-            playPause(data.currentTime + (data.play ? delay : 0), data.play)
-        }
+            const delay = (Date.now() - d.data.time + playerInfo.current.playedAfter) / 1000
+            playPause(d.data.currentTime + (d.data.play ? delay : 0), d.data.play)
+        },false)
+
+        signal.startPoll()
+
+        // recieving data
+        // ws.onData = function (data) {
+        // }
 
         // sending data
         vEl.addEventListener("playing", (e) => {
             playerInfo.current.timeNow = Date.now()
             playerInfo.current.playing = true
             if (playerInfo.current.changedByUser === false) return
-            ws.sendMessage(playerData())
+            signal.send(playerData())
         })
-
-        // vEl.addEventListener("playing", (e) => {
-        //     playerInfo.current.playedAfter = Date.now() - playerInfo.current.timeNow
-        // })
 
         vEl.addEventListener("pause", (e) => {
             playerInfo.current.timeNow = Date.now()
             playerInfo.current.playing = false
             if (playerInfo.current.changedByUser === false) return
-            ws.sendMessage(playerData())
+            signal.send(playerData())
         })
     }, [])
 
