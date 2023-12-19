@@ -1,4 +1,4 @@
-export default function signal_system_client(options) {
+export default function signal_system_client(options = {}) {
     function addState(value) {
         return {
             value,
@@ -20,26 +20,34 @@ export default function signal_system_client(options) {
     obj.pipesCount = 0
     obj.pipesAllowed = 1
 
-    obj.id = '123'
+    obj.getRandomId = function (len = 8) {
+        return ((Math.random() * 5000) + Date.now()).toString().substring(0, len)
+    }
+
+    obj.id = obj.getRandomId()
     obj.channel = ''
     obj.baseurl = '' // example.com/somepoint
     obj.lastPolled = 0
+    obj.pollingSleepAfter = 5
 
     obj = Object.assign(obj, options)
     obj.on = {
         data: addState(null),
-        error: addState(null)
+        isSuccess: addState(true),
+        error: addState(null),
+        response: addState(null),
+        sleeping: addState(false)
+    }
+
+    function wait(time) {
+        return new Promise((res, rej) => {
+            setTimeout(() => {
+                res(time)
+            }, time)
+        })
     }
 
     async function sendPoll() {
-        function handle_error() {
-            const errorMessage = 'connection error reconnecting ...'
-            console.error(errorMessage)
-            obj.on.error.set()
-            setTimeout(()=>{
-                sendPoll()
-            },1000)
-        }
         try {
             let res = await fetch(`${obj.baseurl}?mode=polling`, {
                 method: 'POST',
@@ -56,25 +64,29 @@ export default function signal_system_client(options) {
                         obj.on.data.set(each)
                     })
                 }
-                sendPoll()
+                return { data: true }
             }
-            else {
-                setTimeout(() => {
-                    handle_error()
-                }, 1000)
-            }
-            obj.pipesCount--
+            return { data: true }
         } catch (error) {
-            handle_error()
+            return { data: false }
         }
-
     }
 
-    obj.startPoll = () => {
-        sendPoll()
-        // while(obj.pipesCount < obj.pipesAllowed){
-        //     obj.pipesCount++
-        // }
+    obj.startPoll = async () => {
+        const res = await sendPoll()
+        if (res.data) {
+            obj.startPoll()
+        }
+        else {
+            await wait(3000)
+            obj.startPoll()
+            console.error(`connection failed reconnecting...`)
+        }
+    }
+
+    obj.manualPoll = () => {
+        obj.on.sleeping.set(false)
+        return sendPoll
     }
 
     obj.send = async function (data, receiver = obj.channel) {
@@ -94,6 +106,17 @@ export default function signal_system_client(options) {
 
         }
     }
+
+    // polling sleep manage
+
+    obj.lastResponses = []
+    function managePollingSleep() {
+        obj.on.response.bind(d => {
+            console.log(d)
+        }, false)
+    }
+    managePollingSleep()
+
     return obj
 }
 

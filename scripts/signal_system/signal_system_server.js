@@ -1,7 +1,7 @@
-export default function signal_system_server(options = {}) {
+export function signal_system_server(options = {}) {
     let obj = {}
     obj.signals = []
-    obj.pollinterval = 10000
+    obj.pollinterval = 3000
 
     obj.signalCallbacks = new Set([])
 
@@ -20,7 +20,7 @@ export default function signal_system_server(options = {}) {
 
     obj.resolver = obj.resolvers.nextjs
     
-    obj = Object.assign(options , obj)
+    obj = Object.assign(obj , options)
 
     function wait(time) {
         return new Promise((res, rej) => {
@@ -75,7 +75,7 @@ export default function signal_system_server(options = {}) {
         
         await wait(obj.pollinterval)
         obj.signalCallbacks.delete(signalTempFunction)
-        obj.resolver(req , res , null)
+        obj.resolver(req , res , false)
     }
 
     async function addSignalSendRequest(req , res){

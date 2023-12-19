@@ -8,7 +8,7 @@ export default function Mainpage(props) {
 
     const inputEl = useRef()
     const [roomLink, setroomLink] = useState("")
-    const [videoLink, setvideoLink] = useState("")
+    const [videoLink, setvideoLink] = useState("http://index1.circleftp.net/FILE/Hindi%20Movies/2023/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264/Yaariyan%202%20%282023%29%201080p%20HQ%20S-Print%20Hindi%20x264.mkv")
     const videoEl = useRef()
     const videoIEL = useRef()
 
@@ -53,6 +53,21 @@ export default function Mainpage(props) {
             true
         )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // networking
         const signal = signal_system_client({
             baseurl : `${location.href.split('/room')[0]}/api/signaling`,
@@ -60,15 +75,33 @@ export default function Mainpage(props) {
         })
 
         signal.on.data.bind(d=>{
+            // if(d.sender === signal.id)
+            console.log(d)
             playerInfo.current.changedByUser = false
             const delay = (Date.now() - d.data.time + playerInfo.current.playedAfter) / 1000
             playPause(d.data.currentTime + (d.data.play ? delay : 0), d.data.play)
         },false)
 
         signal.startPoll()
+        
+        document.addEventListener("click",async e=>{
+        })
+
+        let lastEventTime = 0
+
+
+
+
+
+
+
+
+
 
         // sending data
         vEl.addEventListener("playing", (e) => {
+            if((Date.now() - lastEventTime) <= 400) return
+            lastEventTime = Date.now()
             playerInfo.current.timeNow = Date.now()
             playerInfo.current.playing = true
             if (playerInfo.current.changedByUser === false) return
@@ -76,11 +109,25 @@ export default function Mainpage(props) {
         })
 
         vEl.addEventListener("pause", (e) => {
+            if((Date.now() - lastEventTime) <= 400) return
+            lastEventTime = Date.now()
             playerInfo.current.timeNow = Date.now()
             playerInfo.current.playing = false
             if (playerInfo.current.changedByUser === false) return
             signal.send(playerData())
         })
+
+        vEl.addEventListener("seeked", (e) => {
+            if((Date.now() - lastEventTime) <= 400 || vEl.currentTime < 1) return
+            lastEventTime = Date.now()
+            if(vEl.playing) vEl.pause()
+            playerInfo.current.timeNow = Date.now()
+            playerInfo.current.playing = false
+            if (playerInfo.current.changedByUser === false) return
+            signal.send(playerData())
+        })
+
+
     }, [])
 
     return (
