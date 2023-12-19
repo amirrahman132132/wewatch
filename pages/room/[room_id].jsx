@@ -5,7 +5,7 @@ export default function Room(props) {
     return (
         <div>
             <Head>
-                <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"></meta>
+                <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests"></meta>
             </Head>
             <Mainpage room_id={props.room_id} />
         </div>
