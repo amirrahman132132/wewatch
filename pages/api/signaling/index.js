@@ -5,5 +5,6 @@ const signal = signal_system_server({
 })
 
 export default async function signaling(req, res) {
+    console.log(signal)
     signal.connectSignalSystem(req ,res)
 }
