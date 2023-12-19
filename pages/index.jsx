@@ -23,9 +23,9 @@ export default function Home() {
                         Wellcome To <span className="text-purple-600">WeWatch plll</span>
                     </div>
                     {
-                        // <a href={`./room/${generateRandomString(6)}`}>
-                        //     <Button>Create Room</Button>
-                        // </a>
+                        <a href={`./room/${generateRandomString(6)}`}>
+                            <Button>Create Room</Button>
+                        </a>
                     }
                 </div>
             </div>
