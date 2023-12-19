@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "testHost": "node ./server/socket/socket.io.js"
+    "testHost": "node ./server/socket/socket.io.js",
+    "vercel_build" : "vercel build",
+    "vercel_deploy" : "vercel deploy --prebuilt"
   },
   "dependencies": {
     "next": "12.2.0",
