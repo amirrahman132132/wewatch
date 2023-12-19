@@ -132,6 +132,13 @@ export default function Mainpage(props) {
 
     }, [])
 
+    function handleFileSelect(e){
+        const file = e.target.files[0]
+        if(file){
+            videoEl.current.src = URL.createObjectURL(file)
+        }
+    }
+
     return (
         <>
             <div className="root flex flex-col gap-y-[20px] py-[20px] mx-4">
@@ -152,6 +159,11 @@ export default function Mainpage(props) {
 
                 <Section>
                     <video ref={videoEl} src={videoLink} className="w-full" controls autoPlay={false}></video>
+                </Section>
+                <Section>
+                    <div className="selectFile">
+                        <input onChange={handleFileSelect} type="file" />
+                    </div>
                 </Section>
 
                 <Section>
