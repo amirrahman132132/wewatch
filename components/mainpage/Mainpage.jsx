@@ -90,6 +90,7 @@ export default function Mainpage(props) {
 
         let lastEventTime = 0
 
+        console.log('header added')
 
 
 
