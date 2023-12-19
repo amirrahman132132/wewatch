@@ -11,30 +11,7 @@ export default function Home() {
     const [messages, setmessages] = useState([])
 
     useEffect(() => {
-        // polling
-        // const poll = polling_client()
-        // poll.startPoll()
-        const signal = signal_system_client({
-            id: (Math.random() * 10).toFixed(),
-            username: "Amir Rahman",
-            channel: "myroom",
-            baseurl: "http://localhost:3000/api/signaling"
-        })
 
-        signal.startPoll()
-        signal.on.data.bind((d) => {
-            setmessages((v) => [...v, {...d , receivedAt : Date.now()}])
-            console.log(d)
-        }, false)
-
-        window.t = signal
-
-        window.s = (name, msg) => {
-            signal.send({
-                name,
-                msg
-            })
-        }
     }, [])
 
     return (
