@@ -1,7 +1,7 @@
 export function signal_system_server(options = {}) {
     let obj = {}
     obj.signals = []
-    obj.pollinterval = 8000
+    obj.pollinterval = 5000
 
     obj.signalCallbacks = new Set([])
 
