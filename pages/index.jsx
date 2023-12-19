@@ -15,7 +15,7 @@ export default function Home() {
     return (
         <>
             <Head>
-                <title>VirtualTheatre</title>
+                <title>wewatch</title>
             </Head>
             <div className="root bg-yellow-100 flex w-full min-h-screen items-center justify-center">
                 <div className="flex flex-col bg-white items-center gap-6 p-20 shadow-xl font-bold">
