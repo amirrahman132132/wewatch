@@ -82,7 +82,7 @@ export default function Mainpage(props) {
             playPause(d.data.currentTime + (d.data.play ? delay : 0), d.data.play)
         },false)
 
-        signal.startPoll()
+        // signal.startPoll()
         
         document.addEventListener("click",async e=>{
         })
