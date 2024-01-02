@@ -29,6 +29,8 @@ export default function signal_system_client(options) {
     obj.baseurl = '' // example.com/somepoint
     obj.lastPolled = 0
     obj.pollingSleepAfter = 5
+    obj.sendPoint = ''
+    obj.pollPoint = ''
 
     Object.assign(obj, options)
 
@@ -52,7 +54,7 @@ export default function signal_system_client(options) {
     async function sendPoll() {
         try {
             obj.on.polling.set(true)
-            let url = `${obj.baseurl}?mode=polling`,
+            let url = `${obj.baseurl}${obj.pollPoint}?mode=polling`,
                 res = await fetch(url, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -109,7 +111,7 @@ export default function signal_system_client(options) {
     obj.send = async function (data, receiver = obj.channel) {
         const timeNow = Date.now()
         try {
-            let res = fetch(`${obj.baseurl}?mode=signal_send`, {
+            let res = fetch(`${obj.baseurl}${obj.sendPoint}?mode=signal_send`, {
                 method: 'POST',
                 body: JSON.stringify({
                     sender: obj.id.toString(),

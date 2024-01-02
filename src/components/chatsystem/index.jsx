@@ -56,7 +56,8 @@ export default function ChatBody({ messages, onSend }) {
     useEffect(() => {
         const signal = signal_system_client({
             baseurl: location.href + "api/signaling",
-            channel: "123"
+            channel: "123",
+            sendPoint : '/send'
         })
         signal_ref.current = signal
         window.signal = signal
