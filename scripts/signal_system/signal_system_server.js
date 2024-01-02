@@ -1,26 +1,11 @@
 export function signal_system_server(options = {}) {
     let obj = {}
     obj.signals = []
-    obj.pollinterval = 5000
+    obj.pollDuration = 5000
 
     obj.signalCallbacks = new Set([])
 
-    obj.resolvers = {
-        'nextjs' : function(req, res , data){
-            if(res.headersSent) return
-            try {
-                res.status(200).json({ data })
-            } catch (error) {
-                const errorMessage = 'desynched request dropped'
-                console.log(errorMessage)
-                res.status(500).json({ data })
-            }
-        }
-    }
-
-    obj.resolver = obj.resolvers.nextjs
-    
-    obj = Object.assign(obj , options)
+    obj = Object.assign(obj, options)
 
     function wait(time) {
         return new Promise((res, rej) => {
@@ -30,83 +15,80 @@ export function signal_system_server(options = {}) {
         })
     }
 
-    function addSignal(sender, receiver, time, data) { // {sender : '213z2x1c' , reciever : '2a1sd12' , time : 1321512465 , data : {}}
+    async function addSignal(sender, receiver, time, data) {
         obj.signals.push({
             receiver,
             sender,
             time,
             data
         })
-        obj.signalCallbacks.forEach(each=>each())
+        obj.signalCallbacks.forEach(each => each())
     }
 
-    obj.addSignal = addSignal
-    obj.signalFilters = {
-        'default' : (incommingPollReq , eachSignal)=>{
-            return eachSignal.receiver === incommingPollReq.receiver
-        }
-    }
-    obj.signalFilter = obj.signalFilters.default
-    
-    obj.getSignal = function(incommingPollReq) {
+    function getSignal(lastPolled, receiver) {
         const res = obj.signals.filter((eachSignal, i) => {
-            const selected = eachSignal.time > incommingPollReq.lastPolled && obj.signalFilter(incommingPollReq , eachSignal)
+            const selected = eachSignal.time > lastPolled && eachSignal.receiver === receiver
             return selected
         })
         return res.length > 0 ? res : null
     }
 
     // polling
-    
-    async function addPollRequest(req, res) {
-        const incommingPollReq = JSON.parse(req.body)
-        
-        // signal checking callback
-        function signalTempFunction(){
-            const signalData = obj.getSignal(incommingPollReq)
-            if(signalData){
-                obj.resolver(req,res,signalData)
-                obj.signalCallbacks.delete(signalTempFunction)
+
+    async function addPollRequest(lastPolled, receiver) {
+        return new Promise(async (res,rej)=>{
+            function signalEvaluation() {
+                const signalData = getSignal(lastPolled, receiver)
+                if (signalData) {
+                    res({data : signalData})
+                    obj.signalCallbacks.delete(signalEvaluation)
+                }
             }
-        }
-        obj.signalCallbacks.add(signalTempFunction)
-        
-        signalTempFunction()
-        
-        await wait(obj.pollinterval)
-        obj.signalCallbacks.delete(signalTempFunction)
-        obj.resolver(req , res , false)
+            signalEvaluation()
+
+            obj.signalCallbacks.add(signalEvaluation)
+
+            await wait(obj.pollDuration)
+
+            obj.signalCallbacks.delete(signalEvaluation)
+            res({ data: null })            
+        })
     }
 
-    async function addSignalSendRequest(req , res){
-        // adding signal
-        const incommingSignal = JSON.parse(req.body)
-        obj.addSignal(incommingSignal.sender, incommingSignal.receiver, incommingSignal.time, incommingSignal.data)
-        obj.resolver(req , res , true)
+    async function onConnectionRequest(req) {
+        // nextjs 14 integration
+        const params = req.nextUrl.searchParams
+
+        // manage polling request
+        if (params.get('mode') === 'polling') {
+            const { lastPolled, receiver } = await req.json()
+            return await addPollRequest(lastPolled, receiver)
+        }
+
+        // managing send signal
+        if (params.get('mode') === 'signal_send') {
+            const { sender, receiver, time, data } = await req.json()
+            addSignal(sender, receiver, time, data)
+            return { data: 'ok' }
+        }
+
+        return { data: 'wrong request' }
     }
 
-    obj.connectSignalSystem = async function(req , res){
-        if (typeof req.query.mode === 'string' && req.query.mode === 'polling') {
-            addPollRequest(req , res)
-        }
-        else if (typeof req.query.mode === 'string' && req.query.mode === 'signal_send') {
-            addSignalSendRequest(req , res)
-        }
-    }
+    obj.handleRequest = onConnectionRequest
 
     return obj
 }
 
 // example use
 
-// import signal_system from "../../../scripts/signal_system/signal_system_server"
+// import { signal_system_server } from "../../../../scripts/signal_system/signal_system_server"
 
-// const signal = signal_system()
+// const signal = signal_system_server({
+//     pollinterval : 8000
+// })
 
-// export default async function signaling(req, res) {
-//     let gParms = req.query,
-//     pParms = req.body
-    
-//     signal.connectSignalSystem(req ,res)
-//     there are resolvers added and you can also make yours
+// export async function POST(req){
+//     const res = await signal.handleRequest(req)
+//     return new Response(JSON.stringify(res))
 // }

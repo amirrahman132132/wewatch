@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
+
+:root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
+}
+
+@keyframes opacityBlink {
+    0% {opacity: 0.1;}
+    50% {opacity: 1;}
+    100% {opacity: 0.1;}
+}
+
+.blinkingOpacity {
+    animation: opacityBlink 1s infinite;
+}
+
+@keyframes scaleInAnimation {
+    0% {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+.scaleInAnimate {
+    animation: scaleInAnimation 0.3s ease-in-out;
+}

@@ -1,7 +1,10 @@
+"use client"
+
 import { useEffect, useRef, useState } from "react"
+import signal_system_client from "../../../scripts/signal_system/signal_system_client"
+import { copytoclipboard } from "../../../scripts/common"
 import { Button, Input, Section } from "../corepagedesign/CorePageComponents"
-import signal_system_client from "../../scripts/signal_system/signal_system_client"
-import { copytoclipboard } from "../../scripts/common"
+import VideoPlayer from "../videoplayer/VideoPlayer"
 
 export default function Mainpage(props) {
     const { room_id } = props
@@ -17,124 +20,27 @@ export default function Mainpage(props) {
     useEffect(() => {
         setroomLink(location.href)
     }, [])
-
-    // video player events
-    const playerInfo = useRef({
-        playing: false,
-        playedByUser: false,
-        timeNow: Date.now(),
-        playedAfter: 0
+    // networking
+    const signal = signal_system_client({
+        baseurl : `${location.href.split('/room')[0]}/api/signaling`,
+        channel : room_id
     })
 
-    function playPause(time, play) {
-        const vEl = videoEl.current
-        vEl.currentTime = time
-        play ? vEl.play() : vEl.pause()
-    }
+    window.signal = signal
 
-    function playerData() {
-        const vEl = videoEl.current
-        return {
-            currentTime: vEl.currentTime,
-            play: playerInfo.current.playing,
-            time: playerInfo.current.timeNow
-        }
-    }
+    signal.on.data.bind(res=>{
+        console.log(res)
+        if(res.info.sender === signal.id) return
+        playerInfo.current.changedByUser = false
+        const delay = (Date.now() - res.time + playerInfo.current.playedAfter) / 1000
+        playPause(res.currentTime + (res.play ? delay : 0), res.play)
+    },false)
 
-    // 
-    useEffect(() => {
-        const vEl = videoEl.current
+    signal.startPoll()
 
-        vEl.addEventListener(
-            "click",
-            (e) => {
-                playerInfo.current.changedByUser = true
-            },
-            true
-        )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // networking
-        const signal = signal_system_client({
-            baseurl : `${location.href.split('/room')[0]}/api/signaling`,
-            channel : room_id
-        })
-
-        signal.on.data.bind(d=>{
-            // if(d.sender === signal.id)
-            console.log(d)
-            playerInfo.current.changedByUser = false
-            const delay = (Date.now() - d.data.time + playerInfo.current.playedAfter) / 1000
-            playPause(d.data.currentTime + (d.data.play ? delay : 0), d.data.play)
-        },false)
-
-        signal.startPoll()
-        
-        document.addEventListener("click",async e=>{
-
-        })
-
-        let lastEventTime = 0
-
-        console.log('555')
-
-
-
-
-
-
-
-
-
-        // sending data
-        vEl.addEventListener("playing", (e) => {
-            if((Date.now() - lastEventTime) <= 400) return
-            lastEventTime = Date.now()
-            playerInfo.current.timeNow = Date.now()
-            playerInfo.current.playing = true
-            if (playerInfo.current.changedByUser === false) return
-            signal.send(playerData())
-        })
-
-        vEl.addEventListener("pause", (e) => {
-            if((Date.now() - lastEventTime) <= 400) return
-            lastEventTime = Date.now()
-            playerInfo.current.timeNow = Date.now()
-            playerInfo.current.playing = false
-            if (playerInfo.current.changedByUser === false) return
-            signal.send(playerData())
-        })
-
-        vEl.addEventListener("seeked", (e) => {
-            if((Date.now() - lastEventTime) <= 400 || vEl.currentTime < 1) return
-            lastEventTime = Date.now()
-            if(vEl.playing) vEl.pause()
-            playerInfo.current.timeNow = Date.now()
-            playerInfo.current.playing = false
-            if (playerInfo.current.changedByUser === false) return
-            signal.send(playerData())
-        })
-
-
-    }, [])
-
-    function handleFileSelect(e){
+    function handleFileSelect(e) {
         const file = e.target.files[0]
-        if(file){
+        if (file) {
             videoEl.current.src = URL.createObjectURL(file)
         }
     }
@@ -158,7 +64,7 @@ export default function Mainpage(props) {
                 </Section>
 
                 <Section>
-                    <video ref={videoEl} src={videoLink} className="w-full" controls autoPlay={false}></video>
+                    <VideoPlayer reff={videoEl} videoLink={videoLink} />
                 </Section>
                 <Section>
                     <div className="selectFile">

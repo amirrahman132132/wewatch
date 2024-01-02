@@ -1,4 +1,4 @@
-export default function signal_system_client(options = {}) {
+export default function signal_system_client(options) {
     function addState(value) {
         return {
             value,
@@ -16,23 +16,25 @@ export default function signal_system_client(options = {}) {
         }
     }
 
-    let obj = {}
+    const obj = {}
     obj.pipesCount = 0
     obj.pipesAllowed = 1
 
-    obj.getRandomId = function (len = 8) {
-        return ((Math.random() * 5000) + Date.now()).toString().substring(0, len)
+    function getRandomId(len = 8) {
+        return ((Math.random() * 5000).toString() + Date.now()).toString().substring(0, len)
     }
 
-    obj.id = obj.getRandomId()
+    obj.id = getRandomId()
     obj.channel = ''
     obj.baseurl = '' // example.com/somepoint
     obj.lastPolled = 0
     obj.pollingSleepAfter = 5
 
-    obj = Object.assign(obj, options)
+    Object.assign(obj, options)
+
     obj.on = {
         data: addState(null),
+        polling : addState(false),
         isSuccess: addState(true),
         error: addState(null),
         response: addState(null),
@@ -49,32 +51,47 @@ export default function signal_system_client(options = {}) {
 
     async function sendPoll() {
         try {
-            let res = await fetch(`${obj.baseurl}?mode=polling`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    receiver: obj.channel ? obj.channel : obj.id,
-                    lastPolled: obj.lastPolled
+            obj.on.polling.set(true)
+            let url = `${obj.baseurl}?mode=polling`,
+                res = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        receiver: obj.channel ? obj.channel : obj.id,
+                        lastPolled: obj.lastPolled
+                    })
                 })
-            })
             if (res.status === 200) {
                 res = await res.json()
                 if (res.data) {
+                    // console.log(res.data)
+
                     res.data.forEach((each, i) => {
+                        each.data.info = {
+                            sender: each.sender,
+                            receiver: each.receiver,
+                            time: each.time,
+                            initial_load : obj.lastPolled <= 0,
+                            is_me : obj.id === each.sender
+                        }
+
                         obj.lastPolled = each.time
-                        obj.on.data.set(each)
+                        obj.on.data.set(each.data)
                     })
                 }
-                return { data: true }
+                obj.on.polling.set(false)
             }
+            obj.on.polling.set(false)
             return { data: true }
         } catch (error) {
+            obj.on.polling.set(false)
             return { data: false }
         }
     }
 
     obj.startPoll = async () => {
         const res = await sendPoll()
-        if (res.data) {
+        if (res.data === true) {
+            await wait(50)
             obj.startPoll()
         }
         else {
@@ -84,7 +101,7 @@ export default function signal_system_client(options = {}) {
         }
     }
 
-    obj.manualPoll = () => {
+    obj.manualPoll = async () => {
         obj.on.sleeping.set(false)
         return sendPoll
     }
@@ -107,9 +124,15 @@ export default function signal_system_client(options = {}) {
         }
     }
 
+    obj.setChannel = async function(name){
+        obj.channel = name
+        obj.lastPolled = 0
+        return obj.manualPoll()
+    }
+
     // polling sleep manage
 
-    obj.lastResponses = []
+    let lastResponses = []
     function managePollingSleep() {
         obj.on.response.bind(d => {
             console.log(d)
